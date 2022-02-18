@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -11,7 +12,9 @@ import (
 )
 
 func extractData(extension pkix.Extension) (data []byte, err error) {
-	return extension.Value, nil
+	raw := extension.Value
+	_, err = asn1.Unmarshal(raw, &data)
+	return data, err
 }
 
 func main() {
@@ -37,6 +40,9 @@ func main() {
 		case "1.3.6.1.5.5.7.13.37":
 			log.Printf("Rick's never gonna give you up...")
 			rick, err := extractData(v)
+			if err != nil {
+				log.Fatalf("FATAL: %v", err)
+			}
 			file, err := ioutil.TempFile("./", "rick*.mp3")
 			if err != nil {
 				log.Fatal(err)
